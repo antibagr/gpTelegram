@@ -1,0 +1,28 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator db {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+model User {
+  id         Int       @id @unique
+  name       String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt @map(name: "updated_at")
+  Consumer   Consumer?
+
+  @@map(name: "users")
+}
+
+model Consumer {
+  id      Int  @id @default(autoincrement())
+  user_id Int  @unique
+  User    User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map(name: "consumers")
+}

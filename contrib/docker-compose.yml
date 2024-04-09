@@ -1,0 +1,42 @@
+version: "3.9"
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  web:
+    container_name: ${PROJECT_NAME}_web
+    build:
+      context: ../
+      dockerfile: deployment/Dockerfile
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    container_name: ${PROJECT_NAME}_postgres
+    image: postgres:16.2
+    env_file:
+      - ../.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    container_name: ${PROJECT_NAME}_redis
+    image: redis:6.2
+    ports:
+      - "6379:6379"
+    env_file:
+      - ../.env
+    volumes:
+      - redis_data:/data
+    restart: always
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
