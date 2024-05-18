@@ -43,6 +43,6 @@ migrate:
 .PHONY: migrate ## Upgrade the database to the latest revision
 
 run: ## Run telegram bot
-	$(py) python -m app.cmd dispatch
+	$(py) python app/bot.py
 .PHONY: run
 

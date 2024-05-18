@@ -1,6 +1,7 @@
 .idea/
 .env
 .vscode/
+*.session
 
 # pyenv
 .python-version

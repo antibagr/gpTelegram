@@ -50,12 +50,21 @@ class RedisSettings(pydantic_settings.BaseSettings):
     REDIS_DATA_TTL: int
 
 
+class ChatGPTSettings(pydantic_settings.BaseSettings):
+    OPENAI_API_KEY: pydantic.SecretStr
+
+
+class TelegramSettings(pydantic_settings.BaseSettings):
+    TELEGRAM_API_ID: pydantic.SecretStr
+    TELEGRAM_APP_API_HASH: pydantic.SecretStr
+    TELEGRAM_APP_TITLE: str
+    TELEGRAM_APP_TITLE_SHORT_NAME: str
+    TELEGRAM_SESSION_NAME: str = "default"
+
+
 class AppSettings(pydantic_settings.BaseSettings):
     ENVIRONMENT: str
     DEBUG: bool
-
-    TELEGRAM_BOT_TOKEN: pydantic.SecretStr
-    TELEGRAM_BOT_NAME: str
 
     LOCALES_DIR: pydantic.DirectoryPath = pathlib.Path("app", "api", "locales")
     I18N_DOMAIN: str = "messages"
@@ -72,6 +81,8 @@ class Settings(
     AppSettings,
     DatabaseSettings,
     RedisSettings,
+    TelegramSettings,
+    ChatGPTSettings,
 ):
     model_config = pydantic_settings.SettingsConfigDict(
         env_file=".env",
