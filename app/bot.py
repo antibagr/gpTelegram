@@ -3,16 +3,13 @@ import typing
 
 import openai
 import openai.types.chat
-import telethon
-import telethon.tl.custom
-import telethon.tl.functions
-import telethon.tl.types
-import uvloop
 from loguru import logger
+from telethon import events, TelegramClient
+from telethon.tl import functions, types
 
 from app.settings import settings
 
-client = telethon.TelegramClient(
+client = TelegramClient(
     session=settings.TELEGRAM_SESSION_NAME,
     api_id=settings.TELEGRAM_API_ID.get_secret_value(),
     api_hash=settings.TELEGRAM_APP_API_HASH.get_secret_value(),
@@ -20,11 +17,11 @@ client = telethon.TelegramClient(
 openai_client = openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY.get_secret_value())
 
 
-async def get_transcribed_audio(event: telethon.tl.custom.Message) -> str:
+async def get_transcribed_audio(event: events.NewMessage.Event) -> str:
     logger.info(f"Received audio message: {event.audio}")
     while True:
-        transcription: telethon.tl.types.messages.TranscribedAudio = await client(
-            telethon.tl.functions.messages.TranscribeAudioRequest(
+        transcription: types.messages.TranscribedAudio = await client(
+            functions.messages.TranscribeAudioRequest(
                 peer=event.peer_id,
                 msg_id=event.id,
             )
@@ -37,7 +34,7 @@ async def get_transcribed_audio(event: telethon.tl.custom.Message) -> str:
             return typing.cast(str, transcription.text)
 
 
-def _filter_message(message: telethon.tl.custom.Message) -> bool:
+def _filter_message(message: events.NewMessage.Event) -> bool:
     return bool(
         message.is_private
         # and not message.out
@@ -49,7 +46,7 @@ def _filter_message(message: telethon.tl.custom.Message) -> bool:
 
 async def get_chatgpt_answer_suggestions(prompt: str) -> list[str]:
     response = await openai_client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4o",
         messages=[
             {
                 "role": "system",
@@ -96,16 +93,27 @@ async def get_selected_suggestion(message: str, suggestions: list[str]) -> str |
     return None
 
 
-@client.on(telethon.events.NewMessage(func=_filter_message))
-async def message(event: telethon.tl.custom.Message) -> None:
-    if event.audio or event.voice:
+@client.on(events.NewMessage(func=_filter_message))
+async def raw_update_handler(event: events.NewMessage.Event):
+    logger.debug(event.stringify())
+
+    logger.info(f"New message received: {event.message or "Media content"}")
+    if event.message.text:
+        text = event.message.text
+    elif (event.media and event.media.voice) or (event.media and event.media.round):
         text = await get_transcribed_audio(event)
     else:
-        text = str(event.text)
+        logger.info("Message is not a voice or audio message")
+        return
+
+    logger.info(f"Processing message: {text}")
     suggestions = await get_chatgpt_answer_suggestions(text)
     reply = await get_selected_suggestion(text, suggestions)
     if reply:
         await event.reply(reply)
+        logger.info(f"Replied with: {reply}")
+    else:
+        logger.info("No reply sent.")
 
 
 async def main() -> None:
@@ -115,4 +123,5 @@ async def main() -> None:
     logger.info("Stopping the bot")
 
 
-uvloop.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

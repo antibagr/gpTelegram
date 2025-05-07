@@ -1,7 +1,8 @@
 SOURCES = app tests
 
 .DEFAULT_GOAL := help
-py = python -m poetry run
+# py = python -m poetry run
+py = 
 
 DOCKER_COMPOSE_FILE = contrib/docker-compose.yml
 

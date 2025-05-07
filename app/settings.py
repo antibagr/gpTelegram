@@ -2,7 +2,6 @@
 # pydantic_settings is not supported by mypy yet
 # https://github.com/pydantic/pydantic/issues/5190
 
-import pathlib
 
 import pydantic
 import pydantic_settings
@@ -65,9 +64,6 @@ class TelegramSettings(pydantic_settings.BaseSettings):
 class AppSettings(pydantic_settings.BaseSettings):
     ENVIRONMENT: str
     DEBUG: bool
-
-    LOCALES_DIR: pydantic.DirectoryPath = pathlib.Path("app", "api", "locales")
-    I18N_DOMAIN: str = "messages"
 
     RATE_LIMIT: float = 0.5
 

@@ -1,3 +1,0 @@
-# gpTelegram
-
-![Logo](cover.jpg)
